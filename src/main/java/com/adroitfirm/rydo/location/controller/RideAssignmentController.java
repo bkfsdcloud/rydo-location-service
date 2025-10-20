@@ -12,7 +12,7 @@ import com.adroitfirm.rydo.location.entity.RideAssignment;
 import com.adroitfirm.rydo.location.service.RideAssignmentService;
 
 @RestController
-@RequestMapping("/api/assignments")
+@RequestMapping("/api/drivers/assignment")
 public class RideAssignmentController {
     private final RideAssignmentService svc;
 
@@ -25,8 +25,13 @@ public class RideAssignmentController {
         return ResponseEntity.ok(svc.createAssignment(a));
     }
 
-    @PostMapping("/<built-in function id>/respond")
+    @PostMapping("/respond")
     public ResponseEntity<RideAssignment> respond(@PathVariable Long id, @RequestParam String action) {
+        return ResponseEntity.ok(svc.respond(id, action));
+    }
+    
+    @PostMapping("/request")
+    public ResponseEntity<RideAssignment> request(@PathVariable Long id, @RequestParam String action) {
         return ResponseEntity.ok(svc.respond(id, action));
     }
 }
