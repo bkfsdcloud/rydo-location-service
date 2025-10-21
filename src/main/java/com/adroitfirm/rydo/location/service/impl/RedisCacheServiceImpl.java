@@ -11,6 +11,7 @@ import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
+import org.springframework.data.redis.connection.RedisGeoCommands.GeoRadiusCommandArgs;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -23,41 +24,39 @@ import com.adroitfirm.rydo.location.service.RedisCacheService;
 @Service
 public class RedisCacheServiceImpl implements RedisCacheService {
 
-	private final RedisTemplate<String, String> redisTemplate;
 	private final GeoOperations<String, String> geoOps;
 	private static final String DRIVER_LOCATION_KEY = "driver-locations";
 	
 	public RedisCacheServiceImpl(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
         this.geoOps = redisTemplate.opsForGeo();
     }
 	
 	public void updateDriverLocation(String driverId, double latitude, double longitude) {
-        geoOps.add(DRIVER_LOCATION_KEY, new RedisGeoCommands.GeoLocation<>(driverId,
-            new Point(longitude, latitude)));
+		Point point = new Point(longitude, latitude);
+        geoOps.add(DRIVER_LOCATION_KEY, new RedisGeoCommands.GeoLocation<>(driverId, point));
     }
 
     public void removeDriver(String driverId) {
-        redisTemplate.opsForZSet().remove(DRIVER_LOCATION_KEY, driverId);
+    	geoOps.remove(DRIVER_LOCATION_KEY, driverId);
     }
 
     public List<DriverAvailabilityResponse> findNearbyDrivers(DriverAvailabilityDto availabilityDto) {
         List<DriverAvailabilityResponse> resultList = new ArrayList<>();
-
+        
         // Create a circle(centerPoint, radius)
-        Point center = new Point(availabilityDto.getCoordinate().getLng(), availabilityDto.getCoordinate().getLat());
+        Point center = new Point(availabilityDto.getCoordinate().getLng(),
+        		availabilityDto.getCoordinate().getLat());
         Distance radius = new Distance(availabilityDto.getRadiusKm(), Metrics.KILOMETERS);
         Circle within = new Circle(center, radius);
-
-        // Search
-        GeoResults<GeoLocation<String>> results = geoOps.radius(DRIVER_LOCATION_KEY, within);
         
-        GeoResults<RedisGeoCommands.GeoLocation<String>> results1 =
-                geoOps.radius("driver-locations", 
-                		new Circle(new Point(availabilityDto.getCoordinate().getLng(), availabilityDto.getCoordinate().getLat()), 
-                				new Distance(availabilityDto.getRadiusKm(), Metrics.KILOMETERS)));
-        System.out.println(results1);
-
+        // Search
+        GeoRadiusCommandArgs args = GeoRadiusCommandArgs.newGeoRadiusArgs()
+                .includeCoordinates()
+                .includeDistance()
+                .sortAscending()
+                .limit(availabilityDto.getCountLimit());
+        GeoResults<GeoLocation<String>> results = geoOps.radius(DRIVER_LOCATION_KEY, within, args);
+        
         if (results == null || results.getContent().isEmpty()) return resultList;
 
         int added = 0;

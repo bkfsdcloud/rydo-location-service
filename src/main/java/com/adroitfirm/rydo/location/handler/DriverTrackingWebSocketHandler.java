@@ -59,7 +59,7 @@ public class DriverTrackingWebSocketHandler implements WebSocketHandler {
     	String driverId = (String) session.getAttributes().get("driverId");
         sessions.remove(session);
         sessionMap.remove(driverId);
-        redisCacheService.removeDriver(driverId);
+//        redisCacheService.removeDriver(driverId);
         log.info("Driver[{}] is offline ", driverId);
     }
 
