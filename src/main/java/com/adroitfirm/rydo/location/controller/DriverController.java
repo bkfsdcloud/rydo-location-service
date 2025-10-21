@@ -63,7 +63,7 @@ public class DriverController {
     
     @GetMapping("/inform")
     public ResponseEntity<ApiResponse<String>> inform(@RequestParam String message) throws Exception {
-    	WebSocketSession session = DriverTrackingWebSocketHandler.sessionMap.get("7373410050");
+    	WebSocketSession session = DriverTrackingWebSocketHandler.sessionMap.get("6379099578");
     	
     	if (Objects.isNull(session))
     		throw new Exception("Session not created");

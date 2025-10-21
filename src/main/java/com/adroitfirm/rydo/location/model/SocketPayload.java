@@ -20,5 +20,5 @@ public class SocketPayload implements Serializable {
 	private String identifier;
 	private Coordinate coordinate;
     private String message;
-    private boolean isOnline;
+    private String status;
 }

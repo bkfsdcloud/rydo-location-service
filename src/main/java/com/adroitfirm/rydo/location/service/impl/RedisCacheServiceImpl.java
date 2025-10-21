@@ -19,15 +19,21 @@ import org.springframework.stereotype.Service;
 import com.adroitfirm.rydo.location.dto.DriverAvailabilityDto;
 import com.adroitfirm.rydo.location.dto.DriverAvailabilityResponse;
 import com.adroitfirm.rydo.location.model.Coordinate;
+import com.adroitfirm.rydo.location.model.DriverInfo;
+import com.adroitfirm.rydo.location.model.RideInfo;
 import com.adroitfirm.rydo.location.service.RedisCacheService;
 
 @Service
 public class RedisCacheServiceImpl implements RedisCacheService {
 
-	private final GeoOperations<String, String> geoOps;
+	private final RedisTemplate<String, Object> redisTemplate;
+	private final GeoOperations<String, Object> geoOps;
 	private static final String DRIVER_LOCATION_KEY = "driver-locations";
+	private static final String DRIVER_INFO_KEY = "driver:info:";
+	private static final String RIDE_INFO_KEY = "ride:info:";
 	
-	public RedisCacheServiceImpl(RedisTemplate<String, String> redisTemplate) {
+	public RedisCacheServiceImpl(RedisTemplate<String, Object> redisTemplate) {
+		this.redisTemplate = redisTemplate;
         this.geoOps = redisTemplate.opsForGeo();
     }
 	
@@ -38,6 +44,22 @@ public class RedisCacheServiceImpl implements RedisCacheService {
 
     public void removeDriver(String driverId) {
     	geoOps.remove(DRIVER_LOCATION_KEY, driverId);
+    }
+    
+    public void cacheDriverInfo(DriverInfo driverInfo) {
+    	redisTemplate.opsForValue().set(DRIVER_INFO_KEY + driverInfo.getDriverId(), driverInfo);
+    }
+    
+    public DriverInfo getDriverInfo(String driverId) {
+    	return (DriverInfo) redisTemplate.opsForValue().get(DRIVER_INFO_KEY + driverId);
+    }
+    
+    public void cacheRideInfo(RideInfo rideInfo) {
+    	redisTemplate.opsForValue().set(RIDE_INFO_KEY + rideInfo.getDriverId(), rideInfo);
+    }
+    
+    public RideInfo getRideInfo(String rideId) {
+    	return (RideInfo) redisTemplate.opsForValue().get(RIDE_INFO_KEY + rideId);
     }
 
     public List<DriverAvailabilityResponse> findNearbyDrivers(DriverAvailabilityDto availabilityDto) {
@@ -55,16 +77,16 @@ public class RedisCacheServiceImpl implements RedisCacheService {
                 .includeDistance()
                 .sortAscending()
                 .limit(availabilityDto.getCountLimit());
-        GeoResults<GeoLocation<String>> results = geoOps.radius(DRIVER_LOCATION_KEY, within, args);
+        GeoResults<GeoLocation<Object>> results = geoOps.radius(DRIVER_LOCATION_KEY, within, args);
         
         if (results == null || results.getContent().isEmpty()) return resultList;
 
         int added = 0;
-        for (GeoResult<GeoLocation<String>> geoResult : results) {
+        for (GeoResult<GeoLocation<Object>> geoResult : results) {
             if (availabilityDto.getCountLimit() > 0 && added >= availabilityDto.getCountLimit()) break;
 
-            GeoLocation<String> location = geoResult.getContent();
-            String driverId = location.getName();
+            GeoLocation<Object> location = geoResult.getContent();
+            String driverId = (String) location.getName();
             Point point = location.getPoint(); // point.getX() = longitude, getY() = latitude
             if (point == null)
             	continue;
