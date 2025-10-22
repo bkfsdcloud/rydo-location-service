@@ -26,11 +26,12 @@ import com.adroitfirm.rydo.location.service.RedisCacheService;
 @Service
 public class RedisCacheServiceImpl implements RedisCacheService {
 
-	private final RedisTemplate<String, Object> redisTemplate;
-	private final GeoOperations<String, Object> geoOps;
 	private static final String DRIVER_LOCATION_KEY = "driver-locations";
 	private static final String DRIVER_INFO_KEY = "driver:info:";
 	private static final String RIDE_INFO_KEY = "ride:info:";
+
+	private final RedisTemplate<String, Object> redisTemplate;
+	private final GeoOperations<String, Object> geoOps;
 	
 	public RedisCacheServiceImpl(RedisTemplate<String, Object> redisTemplate) {
 		this.redisTemplate = redisTemplate;
@@ -65,13 +66,11 @@ public class RedisCacheServiceImpl implements RedisCacheService {
     public List<DriverAvailabilityResponse> findNearbyDrivers(DriverAvailabilityDto availabilityDto) {
         List<DriverAvailabilityResponse> resultList = new ArrayList<>();
         
-        // Create a circle(centerPoint, radius)
         Point center = new Point(availabilityDto.getCoordinate().getLng(),
         		availabilityDto.getCoordinate().getLat());
         Distance radius = new Distance(availabilityDto.getRadiusKm(), Metrics.KILOMETERS);
         Circle within = new Circle(center, radius);
         
-        // Search
         GeoRadiusCommandArgs args = GeoRadiusCommandArgs.newGeoRadiusArgs()
                 .includeCoordinates()
                 .includeDistance()
@@ -81,10 +80,7 @@ public class RedisCacheServiceImpl implements RedisCacheService {
         
         if (results == null || results.getContent().isEmpty()) return resultList;
 
-        int added = 0;
         for (GeoResult<GeoLocation<Object>> geoResult : results) {
-            if (availabilityDto.getCountLimit() > 0 && added >= availabilityDto.getCountLimit()) break;
-
             GeoLocation<Object> location = geoResult.getContent();
             String driverId = (String) location.getName();
             Point point = location.getPoint(); // point.getX() = longitude, getY() = latitude
@@ -92,8 +88,6 @@ public class RedisCacheServiceImpl implements RedisCacheService {
             	continue;
             
             double distanceKm = 0;
-            // geoResult.getDistance() returns org.springframework.data.geo.Distance if included by the implementation;
-            // with .radius(Circle) the distance may or may not be present depending on RedisTemplate version.
             if (geoResult.getDistance() != null) {
             	distanceKm = geoResult.getDistance().getValue();
             } else {
@@ -103,7 +97,6 @@ public class RedisCacheServiceImpl implements RedisCacheService {
             resultList.add(DriverAvailabilityResponse.builder()
             		.coordinate(Coordinate.builder().lat(point.getY()).lng(point.getX()).build())
             		.driverId(driverId).radiusKm(distanceKm).build());
-            added++;
         }
         return resultList;
     }
