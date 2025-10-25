@@ -23,7 +23,7 @@ import com.adroitfirm.rydo.location.entity.Driver;
 import com.adroitfirm.rydo.location.handler.DriverTrackingWebSocketHandler;
 import com.adroitfirm.rydo.location.service.DriverService;
 import com.adroitfirm.rydo.location.service.RedisCacheService;
-import com.adroitfirm.rydo.location.util.ApiResponse;
+import com.adroitfirm.rydo.utility.ApiResponse;
 
 import lombok.AllArgsConstructor;
 

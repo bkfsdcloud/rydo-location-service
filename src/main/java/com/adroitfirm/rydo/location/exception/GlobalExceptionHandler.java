@@ -8,7 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.adroitfirm.rydo.location.util.ApiResponse;
+import com.adroitfirm.rydo.utility.ApiResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

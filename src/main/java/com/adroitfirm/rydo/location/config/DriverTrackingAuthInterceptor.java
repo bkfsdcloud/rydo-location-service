@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.adroitfirm.rydo.location.util.ApiResponse;
+import com.adroitfirm.rydo.utility.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component

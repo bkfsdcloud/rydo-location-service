@@ -16,17 +16,19 @@ import org.springframework.web.socket.WebSocketSession;
 import com.adroitfirm.rydo.dto.DriverAvailabilityDto;
 import com.adroitfirm.rydo.dto.DriverAvailabilityResponse;
 import com.adroitfirm.rydo.dto.SocketMessage;
+import com.adroitfirm.rydo.enumeration.RideStatus;
 import com.adroitfirm.rydo.location.entity.Ride;
 import com.adroitfirm.rydo.location.entity.RideAssignment;
-import com.adroitfirm.rydo.location.enumeration.RideStatus;
 import com.adroitfirm.rydo.location.repository.RideRepository;
 import com.adroitfirm.rydo.location.service.RedisCacheService;
 import com.adroitfirm.rydo.location.service.RideAssignmentService;
-import com.adroitfirm.rydo.location.util.RideConstants;
 import com.adroitfirm.rydo.model.Coordinate;
 import com.adroitfirm.rydo.model.RideInfo;
 import com.adroitfirm.rydo.model.kafka.RideRequested;
+import com.adroitfirm.rydo.utility.RideConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.transaction.Transactional;
 
 @Component
 public class RideEventListener {
@@ -47,12 +49,12 @@ public class RideEventListener {
 		this.rideAssignmentService = rideAssignmentService;
 	}
 	
+	@Transactional
 	@KafkaListener(topicPattern = RideConstants.RIDE_REQUESTED_TOPIC, groupId = RideConstants.RIDE_REQUESTED_TOPIC + "-group-id")
 	public void rideCreated(ConsumerRecord<String, RideRequested> consumerRecord) throws Exception {
 		RideRequested rideRequested = consumerRecord.value();
 		
 		Ride ride = rideRepository.getReferenceById(rideRequested.getRideId());
-		ride.getDriver();
 		
 		RideAssignment assignment = new RideAssignment();
 		assignment.setDriverId(rideRequested.getDriverId());
@@ -82,23 +84,23 @@ public class RideEventListener {
 					.drop(Coordinate.builder().lat(ride.getDropLat()).lng(ride.getDropLng()).build())
 					.build();
 			
-			RideInfo rideInfo = RideInfo.builder().driverId(ride.getDriver().getPhone())
-				.rideId(ride.getId()).status(RideStatus.REQUESTED.name())
-				.riderId(ride.getCustomer().getPhone()).build();
-			
-			redisCacheService.cacheRideInfo(rideInfo);
-			
-	    	if (Objects.isNull(session))
-	    		throw new Exception("Session not created");
-	    	synchronized (session) {
-	    		if (!session.isOpen())
-	    			throw new Exception("Session closed");
-	    		try {
-					session.sendMessage(new TextMessage(mapper.writeValueAsBytes(message)));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			if (Objects.nonNull(ride.getDriver())) {
+				RideInfo rideInfo = RideInfo.builder().driverId(ride.getDriver().getPhone())
+						.rideId(ride.getId()).status(RideStatus.REQUESTED.name())
+						.riderId(ride.getCustomer().getPhone()).build();
+				
+				redisCacheService.cacheRideInfo(rideInfo);
 			}
+			
+	    	if (Objects.nonNull(session) && session.isOpen()) {
+	    		synchronized (session) {
+	    			try {
+	    				session.sendMessage(new TextMessage(mapper.writeValueAsBytes(message)));
+	    			} catch (IOException e) {
+	    				e.printStackTrace();
+	    			}
+	    		}
+	    	}
 			
 		}
 	}
