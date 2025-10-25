@@ -1,5 +1,6 @@
 package com.adroitfirm.rydo.location.handler;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
@@ -8,8 +9,8 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.adroitfirm.rydo.location.model.DriverInfo;
-import com.adroitfirm.rydo.location.model.SocketPayload;
+import com.adroitfirm.rydo.dto.SocketMessage;
+import com.adroitfirm.rydo.model.DriverInfo;
 import com.adroitfirm.rydo.location.service.RedisCacheService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,11 +40,14 @@ public class DriverTrackingWebSocketHandler implements WebSocketHandler {
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         String driverId = (String) session.getAttributes().get("driverId");
-        SocketPayload payload = mapper.readValue((String)message.getPayload(), SocketPayload.class);
+        SocketMessage payload = mapper.readValue((String)message.getPayload(), SocketMessage.class);
         
-        redisCacheService.cacheDriverInfo(DriverInfo.builder().driverId(driverId).coordinate(payload.getCoordinate()).status(payload.getStatus()).build());
-        log.info("Driver[{}] status updated - [{}] ", driverId, payload.getStatus());
-        redisCacheService.updateDriverLocation(driverId, payload.getCoordinate().getLat(), payload.getCoordinate().getLng());
+        if (Objects.nonNull(payload.getRideStatus())) {
+        	
+        }
+        redisCacheService.cacheDriverInfo(DriverInfo.builder().driverId(driverId).coordinate(payload.getDriverLocation()).status(payload.getDriverStatus()).build());
+        log.info("Driver[{}] status updated - [{}] ", driverId, payload.getDriverStatus());
+        redisCacheService.updateDriverLocation(driverId, payload.getDriverLocation().getLat(), payload.getDriverLocation().getLng());
         log.info("Driver[{}] live coordinate updated ", driverId);
     }
 

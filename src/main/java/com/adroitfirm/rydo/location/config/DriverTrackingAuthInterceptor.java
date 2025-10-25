@@ -25,7 +25,7 @@ public class DriverTrackingAuthInterceptor implements HandshakeInterceptor {
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) throws IOException {
 		
-        List<String> driverIds = request.getHeaders().get("X-USER-ID");
+        List<String> driverIds = request.getHeaders().get("X-IDENTIFIER");
         if (driverIds != null && !driverIds.isEmpty()) {
             attributes.put("driverId", driverIds.get(0));
             return true;

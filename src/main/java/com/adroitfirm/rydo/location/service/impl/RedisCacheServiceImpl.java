@@ -16,11 +16,11 @@ import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import com.adroitfirm.rydo.location.dto.DriverAvailabilityDto;
-import com.adroitfirm.rydo.location.dto.DriverAvailabilityResponse;
-import com.adroitfirm.rydo.location.model.Coordinate;
-import com.adroitfirm.rydo.location.model.DriverInfo;
-import com.adroitfirm.rydo.location.model.RideInfo;
+import com.adroitfirm.rydo.dto.DriverAvailabilityDto;
+import com.adroitfirm.rydo.dto.DriverAvailabilityResponse;
+import com.adroitfirm.rydo.model.Coordinate;
+import com.adroitfirm.rydo.model.DriverInfo;
+import com.adroitfirm.rydo.model.RideInfo;
 import com.adroitfirm.rydo.location.service.RedisCacheService;
 
 @Service

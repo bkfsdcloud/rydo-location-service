@@ -2,10 +2,10 @@ package com.adroitfirm.rydo.location.service;
 
 import java.util.List;
 
-import com.adroitfirm.rydo.location.dto.DriverAvailabilityDto;
-import com.adroitfirm.rydo.location.dto.DriverAvailabilityResponse;
-import com.adroitfirm.rydo.location.model.DriverInfo;
-import com.adroitfirm.rydo.location.model.RideInfo;
+import com.adroitfirm.rydo.dto.DriverAvailabilityDto;
+import com.adroitfirm.rydo.dto.DriverAvailabilityResponse;
+import com.adroitfirm.rydo.model.DriverInfo;
+import com.adroitfirm.rydo.model.RideInfo;
 
 public interface RedisCacheService {
 

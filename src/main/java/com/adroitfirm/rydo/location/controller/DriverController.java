@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.adroitfirm.rydo.location.dto.DriverAvailabilityDto;
-import com.adroitfirm.rydo.location.dto.DriverAvailabilityResponse;
+import com.adroitfirm.rydo.dto.DriverAvailabilityDto;
+import com.adroitfirm.rydo.dto.DriverAvailabilityResponse;
 import com.adroitfirm.rydo.location.entity.Driver;
 import com.adroitfirm.rydo.location.handler.DriverTrackingWebSocketHandler;
 import com.adroitfirm.rydo.location.service.DriverService;
