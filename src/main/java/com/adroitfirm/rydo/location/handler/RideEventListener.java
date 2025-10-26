@@ -24,7 +24,7 @@ import com.adroitfirm.rydo.location.service.RedisCacheService;
 import com.adroitfirm.rydo.location.service.RideAssignmentService;
 import com.adroitfirm.rydo.model.Coordinate;
 import com.adroitfirm.rydo.model.RideInfo;
-import com.adroitfirm.rydo.model.kafka.RideRequested;
+import com.adroitfirm.rydo.model.kafka.RideEvent;
 import com.adroitfirm.rydo.utility.RideConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,15 +51,14 @@ public class RideEventListener {
 	
 	@Transactional
 	@KafkaListener(topicPattern = RideConstants.RIDE_REQUESTED_TOPIC, groupId = RideConstants.RIDE_REQUESTED_TOPIC + "-group-id")
-	public void rideCreated(ConsumerRecord<String, RideRequested> consumerRecord) throws Exception {
-		RideRequested rideRequested = consumerRecord.value();
+	public void rideCreated(ConsumerRecord<String, RideEvent> consumerRecord) throws Exception {
+		RideEvent rideRequested = consumerRecord.value();
 		
 		Ride ride = rideRepository.getReferenceById(rideRequested.getRideId());
 		
 		RideAssignment assignment = new RideAssignment();
 		assignment.setDriverId(rideRequested.getDriverId());
 		assignment.setRideId(rideRequested.getRideId());
-		assignment.setStatus(RideStatus.PENDING.name());
 		
 		rideAssignmentService.createAssignment(assignment);
 		
@@ -84,10 +83,68 @@ public class RideEventListener {
 					.drop(Coordinate.builder().lat(ride.getDropLat()).lng(ride.getDropLng()).build())
 					.build();
 			
+			// after acccpted
 			if (Objects.nonNull(ride.getDriver())) {
-				RideInfo rideInfo = RideInfo.builder().driverId(ride.getDriver().getPhone())
+				RideInfo rideInfo = RideInfo.builder().driverId(ride.getDriver().getId())
 						.rideId(ride.getId()).status(RideStatus.REQUESTED.name())
-						.riderId(ride.getCustomer().getPhone()).build();
+						.riderId(ride.getCustomer().getId()).build();
+				
+				redisCacheService.cacheRideInfo(rideInfo);
+			}
+			
+	    	if (Objects.nonNull(session) && session.isOpen()) {
+	    		synchronized (session) {
+	    			try {
+	    				session.sendMessage(new TextMessage(mapper.writeValueAsBytes(message)));
+	    			} catch (IOException e) {
+	    				e.printStackTrace();
+	    			}
+	    		}
+	    	}
+			
+		}
+	}
+	
+	@Transactional
+	@KafkaListener(topicPattern = RideConstants.RIDE_CANCELLED_TOPIC, groupId = RideConstants.RIDE_CANCELLED_TOPIC + "-group-id")
+	public void rideCancelled(ConsumerRecord<String, RideEvent> consumerRecord) throws Exception {
+		RideEvent rideRequested = consumerRecord.value();
+		
+		Ride ride = rideRepository.getReferenceById(rideRequested.getRideId());
+		
+		ride.setStatus(RideStatus.CANCELLED.name());
+		
+		Optional<RideAssignment> assignmentOpt = rideAssignmentService.findAssignmentByUser(ride.getCustomer().getId());
+		
+		if (assignmentOpt.isPresent()) {
+			rideAssignmentService.respond(assignmentOpt.get().getId(), RideStatus.CANCELLED.name());
+		}
+		
+		Coordinate coordinate = Coordinate.builder().lat(ride.getPickupLat()).lng(ride.getPickupLng()).build();
+		DriverAvailabilityDto driverAvailabilityDto = DriverAvailabilityDto.builder().coordinate(coordinate).radiusKm(radiusInM).build(); 
+		
+		List<DriverAvailabilityResponse> availabilityResponses = redisCacheService.findNearbyDrivers(driverAvailabilityDto);
+		
+		Optional<DriverAvailabilityResponse> availabilityResponseOpt = availabilityResponses.stream().max(Comparator.comparing(DriverAvailabilityResponse::getRadiusKm));
+		
+		if (availabilityResponseOpt.isPresent()) {
+			
+			DriverAvailabilityResponse availabilityResponse = availabilityResponseOpt.get();
+			
+			WebSocketSession session = DriverTrackingWebSocketHandler.sessionMap.get(availabilityResponse.getDriverId());
+	    	
+			SocketMessage message = SocketMessage.builder()
+					.message("You have a ride")
+					.distance(ride.getDistanceKm())
+					.fare(ride.getFareEstimated())
+					.pickup(coordinate)
+					.drop(Coordinate.builder().lat(ride.getDropLat()).lng(ride.getDropLng()).build())
+					.build();
+			
+			if (Objects.nonNull(ride.getDriver())) {
+				RideInfo rideInfo = RideInfo.builder().driverId(ride.getDriver().getId())
+						.rideId(ride.getId()).status(RideStatus.REQUESTED.name())
+						.riderId(ride.getCustomer().getId()).build();
 				
 				redisCacheService.cacheRideInfo(rideInfo);
 			}

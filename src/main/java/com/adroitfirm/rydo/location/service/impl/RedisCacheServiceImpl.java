@@ -56,7 +56,7 @@ public class RedisCacheServiceImpl implements RedisCacheService {
     }
     
     public void cacheRideInfo(RideInfo rideInfo) {
-    	redisTemplate.opsForValue().set(RIDE_INFO_KEY + rideInfo.getDriverId(), rideInfo);
+    	redisTemplate.opsForValue().set(RIDE_INFO_KEY + rideInfo.getRideId(), rideInfo);
     }
     
     public RideInfo getRideInfo(String rideId) {

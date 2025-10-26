@@ -1,9 +1,17 @@
 package com.adroitfirm.rydo.location.entity;
 
-import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
+@Getter@Setter
 @Table(name = "ride_assignments")
 public class RideAssignment {
     @Id
@@ -14,16 +22,4 @@ public class RideAssignment {
     private Long rideId;
     private String status; // PENDING, ACCEPTED, DENIED, EXPIRED
     private OffsetDateTime createdAt;
-
-    // getters & setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getDriverId() { return driverId; }
-    public void setDriverId(Long driverId) { this.driverId = driverId; }
-    public Long getRideId() { return rideId; }
-    public void setRideId(Long rideId) { this.rideId = rideId; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public OffsetDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: rydo-location-service
+  config:
+    import: classpath:application-common.yml
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -34,6 +36,3 @@ logging:
     root: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
-ride:
-  service:
-    radius: 60000

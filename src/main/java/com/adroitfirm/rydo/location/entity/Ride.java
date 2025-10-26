@@ -21,8 +21,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "rides")
-@Getter
-@Setter
+@Getter@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -41,7 +40,7 @@ public class Ride {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
     private Driver driver;
-
+    
     @Column(name = "pickup_location", length = 255)
     private String pickupLocation;
 
@@ -83,6 +82,12 @@ public class Ride {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+    
+    @Column(name = "cancelled_reason")
+    private String cancelledReason;
+    
+    @Column(name = "denial_reason")
+    private String denialReason;
 
     @PrePersist
     public void prePersist() {
